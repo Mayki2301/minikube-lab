@@ -23,15 +23,20 @@ jobs:
           echo "=== Verifying images ==="
           docker images | grep node-app
 
-    - name: Deploy and wait for pods
+    - name: Deploy to minikube
       run: |
         kubectl apply -f k8s-node-app.yaml
-        echo "=== Waiting for pods to be created ==="
-        sleep 5
+        echo "✅ Deployment and service created"
+
+    - name: Wait for pods to be ready
+      run: |
+        echo "⏳ Waiting for pods to be created..."
+        sleep 10
+        echo "=== Pod status ==="
         kubectl get pods
-        echo "=== Waiting for pods to be ready (up to 60 seconds) ==="
+        echo "⏳ Waiting for pods to be ready (up to 60 seconds)..."
         kubectl wait --for=condition=ready pod -l app=nodejs-app --timeout=60s
-        echo "=== Pods are ready ==="
+        echo "✅ Pods are ready!"
         kubectl get pods
         echo "=== Pod logs ==="
         kubectl logs -l app=nodejs-app

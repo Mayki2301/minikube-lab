@@ -8,13 +8,13 @@ jobs:
     name: Build Node.js Docker image and deploy to minikube
     steps:
     - uses: actions/checkout@v2
-    
+
     - name: Start minikube
       uses: medyagh/setup-minikube@master
-    
+
     - name: Try the cluster!
       run: kubectl get pods -A
-    
+
     - name: Build image
       run: |
           export SHELL=/bin/bash
@@ -22,39 +22,23 @@ jobs:
           docker build -f ./Dockerfile -t devopshint/node-app:latest .
           echo "=== Verifying images ==="
           docker images | grep node-app
-    
-    - name: Deploy to minikube
+
+    - name: Deploy and wait for pods
       run: |
         kubectl apply -f k8s-node-app.yaml
         echo "=== Waiting for pods to be created ==="
-        sleep 10
+        sleep 5
         kubectl get pods
-        echo "=== Pod details ==="
-        kubectl describe pods
-    
-    - name: Wait for pods to be ready
-      run: |
-        echo "=== Waiting for pods to be ready (max 60s) ==="
-        kubectl wait --for=condition=ready pod -l app=nodejs-app --timeout=60s || true
+        echo "=== Waiting for pods to be ready (up to 60 seconds) ==="
+        kubectl wait --for=condition=ready pod -l app=nodejs-app --timeout=60s
+        echo "=== Pods are ready ==="
         kubectl get pods
-    
-    - name: Check pod logs
-      run: |
         echo "=== Pod logs ==="
-        kubectl logs -l app=nodejs-app || echo "No logs available yet"
-    
+        kubectl logs -l app=nodejs-app
+
     - name: Test service URLs
       run: |
           echo "=== Service list ==="
           minikube service list
           echo "=== Service URL ==="
-          minikube service nodejs-app --url || echo "Service not ready"
-    
-    - name: Debug on failure
-      if: failure()
-      run: |
-        echo "=== Debug information ==="
-        kubectl get pods -o wide
-        kubectl describe pods
-        kubectl get events --sort-by='.lastTimestamp'
-        minikube logs --tail=50
+          minikube service nodejs-app --url

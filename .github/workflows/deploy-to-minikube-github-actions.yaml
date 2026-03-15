@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     name: build Node.js Docker Image and deploy to minikube
     steps:
-    - uses: actions/checkout@v3  # Обновлено до v3
+    - uses: actions/checkout@v3
     
     - name: Start minikube
       uses: medyagh/setup-minikube@master
@@ -28,11 +28,12 @@ jobs:
         kubectl apply -f k8s-node-app.yaml
         echo "✅ Deployment and service created"
     
-    - name: Wait for pods to be ready
+    - name: Wait for pod to be running
       run: |
-        echo "⏳ Waiting for pods to be created..."
+        echo "⏳ Waiting for pod to be created..."
         sleep 10
-        echo "📊 Pod status:"
+        
+        echo "📊 Initial pod status:"
         kubectl get pods
         
         echo "⏳ Waiting for pod to be ready (up to 60 seconds)..."
@@ -40,6 +41,7 @@ jobs:
         
         echo "✅ Pod is ready!"
         kubectl get pods
+        
         echo "📝 Pod logs:"
         kubectl logs -l app=nodejs-app
     
@@ -49,3 +51,4 @@ jobs:
           minikube service list
           echo "🌐 Service URL:"
           minikube service nodejs-app --url
+          echo "✅ Test completed successfully!"
